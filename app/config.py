@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     groq_api_key: str
     openrouter_api_key: str
     llm_model: str = "google/gemma-4-26b-a4b-it:free"
-    profile_name: str = "Chat user"
+    profile_name: str = "Terminator user"
     plan_name: str = "API access"
     max_history_turns: int = 12
     max_image_mb: int = 8
