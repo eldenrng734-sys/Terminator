@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-play" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M10 8.5v7l5.5-3.5z"/></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24"><circle cx="10" cy="6" r="3"/><path d="M3 20c2-6 6-6 8-3s5 2 7-1l3 4z"/></symbol>
+  <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-6l-4 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 10h8"/></symbol>
+  <symbol id="icon-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="icon-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="icon-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="icon-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M14 4v16M9 10l2 2-2 2"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="icon-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4zM17 9a5 5 0 0 1 0 6M19 5a9 9 0 0 1 0 14"/></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+</svg>
+
+<div class="frame"><div class="app">
+  <main class="main">
+    <button class="menu" id="menu" type="button" aria-label="Open menu" aria-controls="side">
+      <svg class="i" aria-hidden="true"><use href="#icon-menu"/></svg>
+    </button>
+    <div class="stage" id="stage">
+      <section class="welcome" id="welcome" aria-labelledby="welcome-title">
+        <h1 id="welcome-title">Hello! Welcome to Chat.</h1>
+        <p>How can I help you, my friend?</p>
+      </section>
+      <div class="thread hide" id="thread" aria-live="polite" aria-relevant="additions text"></div>
+    </div>
+    <div class="dock">
+      <form class="composer" id="composer">
+        <textarea id="input" rows="2" placeholder="Ask anything you have in mind..." aria-label="Message" autocomplete="off"></textarea>
+        <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+        <div class="attachments hide" id="attachments" aria-live="polite"></div>
+        <div class="tools">
+          <button class="round send" id="send" type="submit" aria-label="Send message" title="Send message">
+            <svg class="i" aria-hidden="true"><use href="#icon-send"/></svg>
+          </button>
+          <div class="right">
+            <button class="round" id="mic" type="button" aria-label="Start voice input" aria-pressed="false" title="Start voice input">
+              <svg class="i" aria-hidden="true"><use href="#icon-mic"/></svg>
+            </button>
+            <button class="round" id="attach" type="button" aria-label="Attach images" title="Attach images">
+              <svg class="i" aria-hidden="true"><use href="#icon-link"/></svg>
+            </button>
+          </div>
+        </div>
+      </form>
+      <div class="chips" id="chips" aria-label="Suggested prompts">
+        <button class="chip" type="button" data-prompt="Make a pop song"><span>Make a pop song</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        <button class="chip" type="button" data-prompt="Fix my code"><span>Fix my code</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        <button class="chip" type="button" data-prompt="Help me create a profile"><span>Create a profile</span><svg class="i" aria-hidden="true"><use href="#icon-image"/></svg></button>
+        <button class="chip" type="button" data-prompt="Write a video script"><span>Write a video script</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+  </main>
+
+  <aside class="side" id="side" aria-label="Conversation navigation">
+    <div class="top">
+      <div class="side-tools">
+        <button id="collapse" type="button" aria-label="Close sidebar" title="Close sidebar"><svg class="i" aria-hidden="true"><use href="#icon-panel"/></svg></button>
+        <button id="search-btn" type="button" aria-label="Search conversations" title="Search conversations"><svg class="i" aria-hidden="true"><use href="#icon-search"/></svg></button>
+      </div>
+      <div class="brand">Chat <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l8 4.5v9l-8 4.5-8-4.5V7zM12 2.5v9m0 0l8-4.5M12 11.5L4 7m8 4.5v9"/></svg></div>
+    </div>
+    <nav class="nav" aria-label="Chat actions">
+      <button class="new" id="new" type="button"><svg class="i" aria-hidden="true"><use href="#icon-chat"/></svg><span>New conversation</span></button>
+      <button id="images" type="button" aria-label="Ask about an image"><svg class="i" aria-hidden="true"><use href="#icon-image"/></svg><span>Images</span></button>
+    </nav>
+    <h2 class="recent-h" id="recent-heading">Recent conversations</h2>
+    <input class="find hide" id="find" type="search" placeholder="Search" aria-label="Search conversations" aria-controls="recent">
+    <div class="recent" id="recent" role="list" aria-labelledby="recent-heading"></div>
+    <div class="profile" id="profile" aria-live="polite"><b>Loading profile...</b></div>
+  </aside>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>

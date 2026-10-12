@@ -1,0 +1,5 @@
+ai
+.env
+__pycache__/
+*.pyc
+sessions.sqlite3
