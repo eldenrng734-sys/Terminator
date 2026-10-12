@@ -93,8 +93,8 @@ svg.i {
 .welcome { margin: auto; padding: 24px 16px 8px; text-align: center; }
 .welcome h1 { margin: 0; color: var(--title); font-size: 24px; font-weight: 700; }
 .welcome p { margin: 14px 0 0; color: var(--teal); font-size: 18px; }
-.thread { display: flex; width: min(680px, 100%); flex-direction: column; gap: 14px; margin: 0 auto; padding: 32px 20px 12px; }
-.msg { max-width: 82%; padding: 10px 14px; border-radius: 18px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.thread { display: flex; width: min(680px, 100%); flex-direction: column; gap: 20px; margin: 0 auto; padding: 32px 20px 12px; }
+.msg { max-width: min(92%, 640px); padding: 16px 20px; border-radius: 18px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
 .msg.user { align-self: flex-end; border-bottom-right-radius: 6px; background: var(--teal); color: #fff; }
 .msg.bot { align-self: flex-start; border: 1px solid var(--line2); border-bottom-left-radius: 6px; background: var(--panel); }
 .msg-content { overflow-wrap: anywhere; }

@@ -20,7 +20,6 @@ STYLES_CSS = BASE_DIR / "app" / "static" / "styles.css"
 def index() -> FileResponse:
     return FileResponse(INDEX_HTML)
 
-
 @app.get("/app.js")
 def app_js() -> FileResponse:
     return FileResponse(APP_JS)
