@@ -6,8 +6,8 @@ const imageInput = $("image-input");
 const attachments = $("attachments");
 const status = $("status");
 const side = $("side");
-const loginScreen = $("login-screen");
-const main = document.querySelector(".main");
+const signInModal = $("signin-modal");
+const signInDismissKey = "signin_prompt_dismissed";
 
 let activeSessionId = null;
 let sessions = [];
@@ -18,19 +18,47 @@ const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechReco
 const recognition = SpeechRecognitionAPI ? new SpeechRecognitionAPI() : null;
 let listening = false;
 let activeSpeechButton = null;
+let isAuthenticated = false;
 
 class AuthenticationRequiredError extends Error {}
 
-function showLoginScreen() {
-  loginScreen.classList.remove("hide");
-  main.classList.add("hide");
-  side.classList.add("hide");
+function showLoggedOutState() {
+  isAuthenticated = false;
+  $("profile-user").classList.add("hide");
+  $("profile-login").classList.remove("hide");
+}
+
+function wasSignInPromptDismissed() {
+  try {
+    return sessionStorage.getItem(signInDismissKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function scheduleSignInPrompt() {
+  if (wasSignInPromptDismissed()) return;
+  window.setTimeout(() => {
+    if (!isAuthenticated && !wasSignInPromptDismissed()) {
+      signInModal.showModal();
+      $("signin-close").focus();
+    }
+  }, 5000);
+}
+
+function dismissSignInPrompt() {
+  try {
+    sessionStorage.setItem(signInDismissKey, "true");
+  } catch {
+    // Keep the prompt dismissible if session storage is unavailable.
+  }
+  if (signInModal.open) signInModal.close();
 }
 
 async function apiFetch(resource, options) {
   const response = await fetch(resource, options);
   if (response.status === 401) {
-    showLoginScreen();
+    showLoggedOutState();
     throw new AuthenticationRequiredError("Authentication required.");
   }
   return response;
@@ -449,11 +477,37 @@ $("search-btn").onclick = () => {
 };
 $("find").addEventListener("input", (event) => void refreshSessions(event.target.value));
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && signInModal.open) {
+    dismissSignInPrompt();
+  }
   if (event.key === "Escape" && window.matchMedia("(max-width: 760px)").matches) side.classList.add("closed");
 });
 
+$("signin-close").addEventListener("click", dismissSignInPrompt);
+$("signin-later").addEventListener("click", dismissSignInPrompt);
+signInModal.addEventListener("click", (event) => {
+  if (event.target === signInModal) dismissSignInPrompt();
+});
+signInModal.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  dismissSignInPrompt();
+});
+
 async function initialize() {
-  const user = await readJson(await apiFetch("/api/me"));
+  let user;
+  try {
+    user = await readJson(await apiFetch("/api/me"));
+  } catch (error) {
+    if (error instanceof AuthenticationRequiredError) {
+      scheduleSignInPrompt();
+      return;
+    }
+    throw error;
+  }
+
+  isAuthenticated = true;
+  $("profile-login").classList.add("hide");
+  $("profile-user").classList.remove("hide");
   $("profile-name").textContent = user.name || user.email || "";
   $("profile-email").textContent = user.email || "";
   await refreshSessions();

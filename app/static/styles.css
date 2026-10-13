@@ -81,16 +81,6 @@ svg.i {
 
 .frame { display: flex; height: 100%; min-height: 100dvh; padding: 12px; }
 .app { display: flex; flex: 1; min-width: 0; overflow: hidden; border-radius: 52px; background: var(--panel); }
-.login-screen { display: grid; flex: 1; place-items: center; padding: 28px; background: radial-gradient(90% 70% at 50% 100%, var(--tint) 0%, transparent 70%), linear-gradient(var(--glow), var(--frame)); }
-.login-content { width: min(100%, 380px); }
-.login-brand { margin-bottom: 44px; }
-.login-content h1 { margin: 0; color: var(--title); font-size: 28px; }
-.login-content p { margin: 8px 0 24px; color: var(--muted); }
-.login-options { display: grid; gap: 10px; }
-.login-provider { display: flex; min-height: 46px; align-items: center; justify-content: center; padding: 10px 16px; border: 1px solid var(--line2); border-radius: 8px; color: var(--ink); text-decoration: none; transition: background .15s, border-color .15s; }
-.login-provider:hover { border-color: var(--teal2); background: var(--panel); }
-.login-provider.github { border-color: var(--ink); background: var(--ink); color: var(--panel); }
-.login-provider.github:hover { opacity: .88; }
 .main {
   position: relative;
   display: flex;
@@ -196,7 +186,24 @@ svg.i {
 .profile-meta span { min-width: 0; overflow-wrap: anywhere; color: var(--faint); font-size: 12px; }
 .profile-meta a { flex: none; color: var(--teal); font-size: 12px; text-decoration: none; }
 .profile-meta a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.profile-login { display: grid; gap: 5px; }
+.profile-login > strong { margin-bottom: 2px; }
+.profile-login-link { color: var(--teal); font-size: 12px; text-decoration: none; }
+.profile-login-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 .menu { position: absolute; z-index: 3; top: 14px; right: 14px; display: none; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--muted); }
+
+.signin-modal { width: min(420px, calc(100% - 32px)); max-width: none; padding: 0; overflow: visible; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); color: var(--ink); box-shadow: 0 20px 70px rgb(0 0 0 / 35%); }
+.signin-modal::backdrop { background: rgb(0 0 0 / 62%); backdrop-filter: blur(3px); }
+.signin-modal-content { position: relative; padding: 32px; }
+.signin-modal h2 { margin: 0 28px 22px 0; color: var(--title); font-size: 21px; line-height: 1.35; }
+.signin-options { display: grid; gap: 10px; }
+.signin-provider { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 9px 14px; border: 1px solid var(--line2); border-radius: 7px; color: var(--ink); text-decoration: none; }
+.signin-provider:hover { border-color: var(--teal2); background: var(--frame); }
+.signin-provider.github { border-color: var(--ink); background: var(--ink); color: var(--panel); }
+.signin-provider.github:hover { opacity: .88; }
+.signin-close { position: absolute; top: 10px; right: 12px; display: grid; width: 32px; height: 32px; place-items: center; border-radius: 50%; color: var(--muted); font-size: 22px; line-height: 1; }
+.signin-close:hover, .signin-later:hover { background: var(--frame); color: var(--ink); }
+.signin-later { display: block; margin: 14px auto 0; padding: 6px 10px; border-radius: 6px; color: var(--muted); font-size: 13px; }
 
 @media (max-width: 760px) {
   .frame { padding: 0; }
