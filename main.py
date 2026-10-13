@@ -31,6 +31,12 @@ EMBLEM_PNG = BASE_DIR / "app" / "static" / "terminator-emblem.png"
 def index() -> FileResponse:
     return FileResponse(INDEX_HTML)
 
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 @app.get("/app.js")
 def app_js() -> FileResponse:
     return FileResponse(APP_JS)

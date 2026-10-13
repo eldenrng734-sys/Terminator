@@ -32,6 +32,13 @@ def test_api_routes_require_authentication() -> None:
     assert [response.status_code for response in responses] == [401] * 6
 
 
+def test_health_route_is_public(client: TestClient) -> None:
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_chat_route_returns_reply(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         main, "build_user_message", lambda text, images: {"role": "user", "content": text}
