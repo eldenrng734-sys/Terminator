@@ -5,6 +5,8 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 python-multipart==0.0.20
 python-dotenv==1.0.1
+authlib==1.6.12
+itsdangerous
 pytest==8.3.4
 pytest-asyncio==0.25.2
 httpx==0.28.1

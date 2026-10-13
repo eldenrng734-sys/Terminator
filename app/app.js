@@ -6,6 +6,8 @@ const imageInput = $("image-input");
 const attachments = $("attachments");
 const status = $("status");
 const side = $("side");
+const loginScreen = $("login-screen");
+const main = document.querySelector(".main");
 
 let activeSessionId = null;
 let sessions = [];
@@ -16,6 +18,29 @@ const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechReco
 const recognition = SpeechRecognitionAPI ? new SpeechRecognitionAPI() : null;
 let listening = false;
 let activeSpeechButton = null;
+
+class AuthenticationRequiredError extends Error {}
+
+function showLoginScreen() {
+  loginScreen.classList.remove("hide");
+  main.classList.add("hide");
+  side.classList.add("hide");
+}
+
+async function apiFetch(resource, options) {
+  const response = await fetch(resource, options);
+  if (response.status === 401) {
+    showLoginScreen();
+    throw new AuthenticationRequiredError("Authentication required.");
+  }
+  return response;
+}
+
+function reportError(error) {
+  if (!(error instanceof AuthenticationRequiredError)) {
+    setStatus(error.message);
+  }
+}
 
 if (recognition) {
   recognition.lang = "en-US";
@@ -180,7 +205,7 @@ async function deleteSession(sessionId) {
   if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
 
   try {
-    await readJson(await fetch(`/api/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" }));
+    await readJson(await apiFetch(`/api/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" }));
     const wasActive = activeSessionId === sessionId;
     if (wasActive) {
       activeSessionId = null;
@@ -191,26 +216,26 @@ async function deleteSession(sessionId) {
     if (wasActive && sessions.length) await openSession(sessions[0].id);
     setStatus("");
   } catch (error) {
-    setStatus(error.message);
+    reportError(error);
   }
 }
 
 async function refreshSessions(query = "") {
   const generation = ++searchGeneration;
   try {
-    const response = await fetch(`/api/sessions?q=${encodeURIComponent(query)}`);
+    const response = await apiFetch(`/api/sessions?q=${encodeURIComponent(query)}`);
     const items = await readJson(response);
     if (generation !== searchGeneration) return;
     sessions = items;
     renderRecent(items);
   } catch (error) {
-    setStatus(error.message);
+    reportError(error);
   }
 }
 
 async function openSession(sessionId) {
   try {
-    const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}`);
+    const response = await apiFetch(`/api/sessions/${encodeURIComponent(sessionId)}`);
     const session = await readJson(response);
     activeSessionId = session.id;
     localStorage.setItem("active_session_id", activeSessionId);
@@ -219,12 +244,12 @@ async function openSession(sessionId) {
     setStatus("");
     if (window.matchMedia("(max-width: 760px)").matches) side.classList.add("closed");
   } catch (error) {
-    setStatus(error.message);
+    reportError(error);
   }
 }
 
 async function createSession() {
-  const response = await fetch("/api/sessions", { method: "POST" });
+  const response = await apiFetch("/api/sessions", { method: "POST" });
   const session = await readJson(response);
   activeSessionId = session.id;
   localStorage.setItem("active_session_id", activeSessionId);
@@ -266,13 +291,20 @@ function renderAttachments() {
 
 // Keep this adapter as the single UI-to-chat integration point when replacing the chat API.
 async function requestAssistantReply(formData) {
-  return readJson(await fetch("/api/chat", { method: "POST", body: formData }));
+  return readJson(await apiFetch("/api/chat", { method: "POST", body: formData }));
 }
 
 async function sendMessage(text) {
   const messageText = text.trim();
   if ((!messageText && pendingImages.length === 0) || busy) return;
-  if (!activeSessionId) await createSession();
+  if (!activeSessionId) {
+    try {
+      await createSession();
+    } catch (error) {
+      reportError(error);
+      return;
+    }
+  }
 
   const sentImages = [...pendingImages];
   const userContent = sentImages.length
@@ -310,7 +342,7 @@ async function sendMessage(text) {
     if (activeSessionId === requestSessionId) setStatus("");
   } catch (error) {
     typing.remove();
-    if (activeSessionId === requestSessionId) {
+    if (!(error instanceof AuthenticationRequiredError) && activeSessionId === requestSessionId) {
       addMessage({ role: "assistant", content: `I couldn't send that message: ${error.message}` });
       setStatus(error.message);
     }
@@ -390,7 +422,7 @@ $("images").onclick = () => {
 document.querySelectorAll("[data-prompt]").forEach((button) => {
   button.onclick = () => void sendMessage(button.dataset.prompt);
 });
-$("new").onclick = () => void createSession().catch((error) => setStatus(error.message));
+$("new").onclick = () => void createSession().catch(reportError);
 
 $("mic").onclick = () => {
   if (!recognition) return;
@@ -420,22 +452,11 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && window.matchMedia("(max-width: 760px)").matches) side.classList.add("closed");
 });
 
-async function loadProfile() {
-  const profile = $("profile");
-  try {
-    const data = await readJson(await fetch("/api/profile"));
-    const name = document.createElement("b");
-    name.textContent = data.name;
-    const plan = document.createElement("span");
-    plan.textContent = data.plan;
-    profile.replaceChildren(name, plan);
-  } catch {
-    profile.textContent = "Profile unavailable";
-  }
-}
-
 async function initialize() {
-  await Promise.all([loadProfile(), refreshSessions()]);
+  const user = await readJson(await apiFetch("/api/me"));
+  $("profile-name").textContent = user.name || user.email || "";
+  $("profile-email").textContent = user.email || "";
+  await refreshSessions();
   const savedId = localStorage.getItem("active_session_id");
   const saved = sessions.find((session) => session.id === savedId);
   if (saved) await openSession(saved.id);
@@ -443,4 +464,4 @@ async function initialize() {
   else await createSession();
 }
 
-void initialize().catch((error) => setStatus(error.message));
+void initialize().catch(reportError);

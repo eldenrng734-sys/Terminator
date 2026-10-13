@@ -9,6 +9,13 @@ class Settings(BaseSettings):
 
     groq_api_key: str
     openrouter_api_key: str
+    google_client_id: str
+    google_client_secret: str
+    github_client_id: str
+    github_client_secret: str
+    frontend_host: str = "http://localhost:8000"
+    secret_key: str
+    env: str = "development"
     llm_model: str = "google/gemma-4-26b-a4b-it:free"
     profile_name: str = "Terminator user"
     plan_name: str = "API access"

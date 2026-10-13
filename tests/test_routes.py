@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from app.auth import require_user
 from app.services.session import SessionStore
 
 
@@ -13,16 +14,35 @@ def client(tmp_path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setattr(
         main, "session_store", SessionStore(db_path=tmp_path / "sessions.sqlite3")
     )
+    monkeypatch.setitem(main.app.dependency_overrides, require_user, lambda: 1)
     return TestClient(main.app)
+
+
+def test_api_routes_require_authentication() -> None:
+    with TestClient(main.app) as unauthenticated_client:
+        responses = [
+            unauthenticated_client.get("/api/profile"),
+            unauthenticated_client.get("/api/sessions"),
+            unauthenticated_client.post("/api/sessions"),
+            unauthenticated_client.get("/api/sessions/missing"),
+            unauthenticated_client.delete("/api/sessions/missing"),
+            unauthenticated_client.post("/api/chat", data={"message": "Hi"}),
+        ]
+
+    assert [response.status_code for response in responses] == [401] * 6
 
 
 def test_chat_route_returns_reply(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         main, "build_user_message", lambda text, images: {"role": "user", "content": text}
     )
-    monkeypatch.setattr(main.session_store, "new_session", lambda: "session-1")
-    monkeypatch.setattr(main.session_store, "get_history", lambda session_id: [])
-    monkeypatch.setattr(main.session_store, "append", lambda *args: None)
+    monkeypatch.setattr(
+        main.session_store, "new_session", lambda **kwargs: "session-1"
+    )
+    monkeypatch.setattr(
+        main.session_store, "get_history", lambda session_id, **kwargs: []
+    )
+    monkeypatch.setattr(main.session_store, "append", lambda *args, **kwargs: None)
     monkeypatch.setattr(main, "get_chat_reply", lambda messages: "Hello from Gemma.")
 
     response = client.post("/api/chat", data={"message": "Hi"})
@@ -51,8 +71,12 @@ def test_chat_route_returns_502_for_provider_failure(
     monkeypatch.setattr(
         main, "build_user_message", lambda text, images: {"role": "user", "content": text}
     )
-    monkeypatch.setattr(main.session_store, "new_session", lambda: "session-1")
-    monkeypatch.setattr(main.session_store, "get_history", lambda session_id: [])
+    monkeypatch.setattr(
+        main.session_store, "new_session", lambda **kwargs: "session-1"
+    )
+    monkeypatch.setattr(
+        main.session_store, "get_history", lambda session_id, **kwargs: []
+    )
     monkeypatch.setattr(
         main,
         "get_chat_reply",
@@ -80,7 +104,10 @@ def test_session_routes_create_search_and_load_history(client: TestClient) -> No
     created = client.post("/api/sessions").json()
     search_text = f"find-{uuid4().hex}"
     main.session_store.append(
-        created["id"], {"role": "user", "content": f"{search_text} conversation"}, "A reply"
+        created["id"],
+        {"role": "user", "content": f"{search_text} conversation"},
+        "A reply",
+        user_id=1,
     )
 
     listed = client.get("/api/sessions", params={"q": search_text})
@@ -103,7 +130,10 @@ def test_session_route_returns_404_for_unknown_session(client: TestClient) -> No
 def test_delete_session_removes_session_and_messages(client: TestClient) -> None:
     created = client.post("/api/sessions").json()
     main.session_store.append(
-        created["id"], {"role": "user", "content": "Delete this conversation"}, "A reply"
+        created["id"],
+        {"role": "user", "content": "Delete this conversation"},
+        "A reply",
+        user_id=1,
     )
 
     response = client.delete(f"/api/sessions/{created['id']}")

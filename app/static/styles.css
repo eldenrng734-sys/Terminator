@@ -81,6 +81,16 @@ svg.i {
 
 .frame { display: flex; height: 100%; min-height: 100dvh; padding: 12px; }
 .app { display: flex; flex: 1; min-width: 0; overflow: hidden; border-radius: 52px; background: var(--panel); }
+.login-screen { display: grid; flex: 1; place-items: center; padding: 28px; background: radial-gradient(90% 70% at 50% 100%, var(--tint) 0%, transparent 70%), linear-gradient(var(--glow), var(--frame)); }
+.login-content { width: min(100%, 380px); }
+.login-brand { margin-bottom: 44px; }
+.login-content h1 { margin: 0; color: var(--title); font-size: 28px; }
+.login-content p { margin: 8px 0 24px; color: var(--muted); }
+.login-options { display: grid; gap: 10px; }
+.login-provider { display: flex; min-height: 46px; align-items: center; justify-content: center; padding: 10px 16px; border: 1px solid var(--line2); border-radius: 8px; color: var(--ink); text-decoration: none; transition: background .15s, border-color .15s; }
+.login-provider:hover { border-color: var(--teal2); background: var(--panel); }
+.login-provider.github { border-color: var(--ink); background: var(--ink); color: var(--panel); }
+.login-provider.github:hover { opacity: .88; }
 .main {
   position: relative;
   display: flex;
@@ -91,6 +101,7 @@ svg.i {
 }
 .stage { display: flex; flex: 1; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
 .welcome { margin: auto; padding: 24px 16px 8px; text-align: center; }
+.welcome-logo { display: block; width: 140px; height: 140px; margin: 0 auto 20px; object-fit: contain; }
 .welcome h1 { margin: 0; color: var(--title); font-size: 24px; font-weight: 700; }
 .welcome p { margin: 14px 0 0; color: var(--teal); font-size: 18px; }
 .thread { display: flex; width: min(680px, 100%); flex-direction: column; gap: 20px; margin: 0 auto; padding: 32px 20px 12px; }
@@ -162,7 +173,7 @@ svg.i {
 .side-tools button { display: grid; place-items: center; color: var(--faint); }
 .side-tools button:hover { color: var(--muted); }
 .brand { display: flex; align-items: center; gap: 6px; color: var(--title); font-size: 16px; font-weight: 700; }
-.brand svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-linejoin: round; stroke-width: 1.6; }
+.brand img { display: block; width: 29.04px; height: 29.04px; flex: none; object-fit: contain; }
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav button { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 8px 10px; border-radius: 12px; color: var(--muted); text-align: left; font-size: 14px; }
 .nav button:hover { background: var(--frame); }
@@ -180,8 +191,11 @@ svg.i {
 .recent-delete:disabled { cursor: wait; opacity: .4; }
 .empty-recent { padding: 7px 10px; color: var(--faint); font-size: 13px; }
 .profile { padding: 14px 4px 0; border-top: 1px solid var(--line); line-height: 1.3; text-align: left; }
-.profile b { display: block; color: var(--muted); font-size: 13px; font-weight: 700; }
-.profile span { color: var(--faint); font-size: 12px; }
+.profile strong { display: block; color: var(--muted); font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.profile-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.profile-meta span { min-width: 0; overflow-wrap: anywhere; color: var(--faint); font-size: 12px; }
+.profile-meta a { flex: none; color: var(--teal); font-size: 12px; text-decoration: none; }
+.profile-meta a:hover { text-decoration: underline; text-underline-offset: 2px; }
 .menu { position: absolute; z-index: 3; top: 14px; right: 14px; display: none; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--muted); }
 
 @media (max-width: 760px) {
