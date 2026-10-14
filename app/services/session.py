@@ -9,6 +9,8 @@ from typing import Any
 
 from app.config import get_settings
 
+MAX_TURNS = 6
+
 
 class SessionStore:
     def __init__(
@@ -145,6 +147,121 @@ class SessionStore:
                     (session_id, user_id),
                 ).fetchall()
         return [json.loads(row["payload"]) for row in rows]
+
+    def load_recent_turns(
+        self,
+        session_id: str,
+        user_id: int | None = None,
+        limit: int = 12,
+    ) -> list[dict[str, Any]]:
+        if limit < 0:
+            raise ValueError("limit cannot be negative.")
+        try:
+            with self._lock:
+                with self._connect() as connection:
+                    rows = connection.execute(
+                        "SELECT messages.payload FROM messages "
+                        "JOIN sessions ON sessions.id = messages.session_id "
+                        "WHERE messages.session_id = ? AND sessions.user_id IS ? "
+                        "ORDER BY messages.position DESC LIMIT ?",
+                        (session_id, user_id, limit),
+                    ).fetchall()
+        except sqlite3.Error as exc:
+            raise RuntimeError("Conversation memory unavailable.") from exc
+
+        turns: list[dict[str, Any]] = []
+        for row in reversed(rows):
+            try:
+                payload = json.loads(row["payload"])
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+            role = payload.get("role")
+            content = payload.get("content")
+            if not isinstance(role, str) or not role.strip():
+                continue
+            if isinstance(content, str):
+                if not content.strip():
+                    continue
+            elif not isinstance(content, list) or not content:
+                continue
+            turns.append({"role": role, "content": content})
+        return turns
+
+    def save_turn(
+        self,
+        session_id: str,
+        role: str,
+        content: str | list[Any],
+        user_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        if role not in {"user", "assistant"}:
+            raise ValueError("role must be 'user' or 'assistant'.")
+        if isinstance(content, str):
+            if not content.strip():
+                raise ValueError("content cannot be empty.")
+        elif not isinstance(content, list) or not content:
+            raise ValueError("content must be a non-empty string or list.")
+
+        now = self._now()
+        initial_title = (
+            self._title({"content": content})
+            if role == "user"
+            else "New conversation"
+        )
+        try:
+            with self._lock:
+                with self._connect() as connection:
+                    connection.execute(
+                        "INSERT OR IGNORE INTO sessions "
+                        "(id, title, created_at, updated_at, user_id) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (session_id, initial_title, now, now, user_id),
+                    )
+                    row = connection.execute(
+                        "SELECT title FROM sessions WHERE id = ? AND user_id IS ?",
+                        (session_id, user_id),
+                    ).fetchone()
+                    if row is None:
+                        raise KeyError("Conversation not found.")
+                    if role == "user" and row["title"] == "New conversation":
+                        connection.execute(
+                            "UPDATE sessions SET title = ? "
+                            "WHERE id = ? AND user_id IS ?",
+                            (initial_title, session_id, user_id),
+                        )
+
+                    position = connection.execute(
+                        "SELECT COALESCE(MAX(position), -1) + 1 "
+                        "FROM messages WHERE session_id = ?",
+                        (session_id,),
+                    ).fetchone()[0]
+                    connection.execute(
+                        "INSERT INTO messages (session_id, position, payload) "
+                        "VALUES (?, ?, ?)",
+                        (session_id, position, json.dumps({"role": role, "content": content})),
+                    )
+                    connection.execute(
+                        "UPDATE sessions SET updated_at = ? "
+                        "WHERE id = ? AND user_id IS ?",
+                        (now, session_id, user_id),
+                    )
+                    excess = connection.execute(
+                        "SELECT COUNT(*) FROM messages WHERE session_id = ?",
+                        (session_id,),
+                    ).fetchone()[0] - (MAX_TURNS * 2)
+                    if excess > 0:
+                        connection.execute(
+                            "DELETE FROM messages WHERE session_id = ? AND position IN "
+                            "(SELECT position FROM messages WHERE session_id = ? "
+                            "ORDER BY position LIMIT ?)",
+                            (session_id, session_id, excess),
+                        )
+        except sqlite3.Error as exc:
+            raise RuntimeError("Conversation memory unavailable.") from exc
+
+        return self.load_recent_turns(session_id, user_id, limit=MAX_TURNS * 2)
 
     def list_sessions(
         self, query: str = "", user_id: int | None = None

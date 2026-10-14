@@ -21,3 +21,15 @@ def test_get_chat_reply_sends_markdown_system_prompt(monkeypatch):
     assert reply == "**A formatted reply**"
     assert captured_messages[0] == {"role": "system", "content": SYSTEM_PROMPT}
     assert captured_messages[1] == {"role": "user", "content": "Explain this"}
+
+
+def test_system_prompt_enforces_movie_recommendation_boundaries():
+    assert "movie and TV recommendation assistant" in SYSTEM_PROMPT
+    assert "CANDIDATE LIST" in SYSTEM_PROMPT
+    assert "Never reveal twist endings" in SYSTEM_PROMPT
+    assert "ask one short clarifying question" in SYSTEM_PROMPT
+
+
+def test_system_prompt_never_exposes_candidate_list_to_user():
+    assert "never mention it" in SYSTEM_PROMPT.casefold()
+    assert "never ask the user to supply titles" in SYSTEM_PROMPT.casefold()

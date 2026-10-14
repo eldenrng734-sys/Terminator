@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -6,6 +7,11 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth import oauth, require_user
 from app.config import get_settings
+from app.recommend.models import RecommendationRequest
+from app.recommend.router import (
+    router as recommendation_router,
+    run_recommendation,
+)
 from app.schemas import ChatResponse
 from app.services import auth_store
 from app.services.llm import LLMError, build_user_message, get_chat_reply
@@ -19,6 +25,7 @@ app.add_middleware(
     https_only=(settings.env == "production"),
     same_site="lax",
 )
+app.include_router(recommendation_router)
 
 BASE_DIR = Path(__file__).resolve().parent
 INDEX_HTML = BASE_DIR / "app" / "static" / "index.html"
@@ -149,6 +156,14 @@ def delete_session(
     return {"deleted": True}
 
 
+# Bare "surprise me" carries no genre/title for intent extraction and is one
+# model-flake away from off_topic -> generic chat prose. Route it directly to
+# the broad-discovery surprise path (same pipeline, no intent LLM call).
+# Deliberately anchored: "surprise me with a comedy" still goes through intent
+# so its genre terms are honored.
+_SURPRISE_CHAT_RE = re.compile(r"^\s*(please\s+)?surprise\s+me\s*[!.\s]*$", re.IGNORECASE)
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(
     user_id: int = Depends(require_user),
@@ -170,10 +185,29 @@ async def chat(
     if session_id is not None and session_store.get_session(sid, user_id=user_id) is None:
         raise HTTPException(status_code=404, detail="Conversation not found.")
     history = session_store.get_history(sid, user_id=user_id)
-    try:
-        reply = get_chat_reply([*history, user_message])
-    except LLMError as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    reply: str | None = None
+    if not image_parts and len(message.strip()) >= 2:
+        recommendation_request = RecommendationRequest(query=message)
+        recent_history = session_store.load_recent_turns(
+            sid, user_id=user_id, limit=12
+        )
+        try:
+            recommendation = await run_recommendation(
+                recommendation_request,
+                history=recent_history,
+                surprise=_SURPRISE_CHAT_RE.match(message) is not None,
+            )
+        except HTTPException as exc:
+            if exc.status_code != 422:
+                raise
+        else:
+            reply = recommendation.reply
+
+    if reply is None:
+        try:
+            reply = get_chat_reply([*history, user_message])
+        except LLMError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
     session_store.append(sid, user_message, reply, user_id=user_id)
     return ChatResponse(session_id=sid, reply=reply)
 

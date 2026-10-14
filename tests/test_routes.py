@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -50,12 +51,51 @@ def test_chat_route_returns_reply(client: TestClient, monkeypatch: pytest.Monkey
         main.session_store, "get_history", lambda session_id, **kwargs: []
     )
     monkeypatch.setattr(main.session_store, "append", lambda *args, **kwargs: None)
-    monkeypatch.setattr(main, "get_chat_reply", lambda messages: "Hello from Gemma.")
+    async def fake_recommendation(request, history=None, surprise=False):
+        return SimpleNamespace(reply="Hello from Gemma.")
+
+    monkeypatch.setattr(main, "run_recommendation", fake_recommendation)
 
     response = client.post("/api/chat", data={"message": "Hi"})
 
     assert response.status_code == 200
     assert response.json() == {"session_id": "session-1", "reply": "Hello from Gemma."}
+
+
+def test_chat_route_uses_recommendation_pipeline(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        main, "build_user_message", lambda text, images: {"role": "user", "content": text}
+    )
+    monkeypatch.setattr(
+        main.session_store, "new_session", lambda **kwargs: "session-1"
+    )
+    monkeypatch.setattr(
+        main.session_store, "get_history", lambda session_id, **kwargs: []
+    )
+    monkeypatch.setattr(main.session_store, "append", lambda *args, **kwargs: None)
+
+    async def fake_recommendation(request, history=None, surprise=False):
+        assert request.query == "A tense thriller"
+        assert history == []
+        assert surprise is False
+        return type("Recommendation", (), {"reply": "Start with this thriller."})()
+
+    monkeypatch.setattr(main, "run_recommendation", fake_recommendation)
+    monkeypatch.setattr(
+        main,
+        "get_chat_reply",
+        lambda messages: (_ for _ in ()).throw(AssertionError("unexpected chat fallback")),
+    )
+
+    response = client.post("/api/chat", data={"message": "A tense thriller"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "session_id": "session-1",
+        "reply": "Start with this thriller.",
+    }
 
 
 def test_chat_route_returns_400_for_invalid_message(
@@ -90,7 +130,11 @@ def test_chat_route_returns_502_for_provider_failure(
         Mock(side_effect=main.LLMError("OpenRouter unavailable")),
     )
 
-    response = client.post("/api/chat", data={"message": "Hi"})
+    response = client.post(
+        "/api/chat",
+        data={"message": "Hi"},
+        files={"images": ("test.png", b"image", "image/png")},
+    )
 
     assert response.status_code == 502
 

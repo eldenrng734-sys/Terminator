@@ -13,10 +13,15 @@ class Settings(BaseSettings):
     google_client_secret: str
     github_client_id: str
     github_client_secret: str
+    tmdb_api_key: str | None = None
+    tmdb_read_access_token: str | None = None
+    omdb_api_key: str | None = None
     frontend_host: str = "http://localhost:8000"
     secret_key: str
     env: str = "development"
     llm_model: str = "google/gemma-4-26b-a4b-it:free"
+    default_watch_region: str = "US"
+    surprise_min_vote_average: float = 7.5
     profile_name: str = "Terminator user"
     plan_name: str = "API access"
     max_history_turns: int = 12

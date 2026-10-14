@@ -32,15 +32,15 @@
     </button>
     <div class="stage" id="stage">
       <section class="welcome" id="welcome" aria-labelledby="welcome-title">
-        <img class="welcome-logo" src="/terminator-emblem.png" alt="" width="140" height="140">
-        <h1 id="welcome-title">Hello! Welcome to Terminator.</h1>
-        <p>Wanna lose your Mind and your Job?</p>
+        <img class="welcome-logo" src="/terminator-emblem.png" alt="" width="182" height="182">
+        <h1 id="welcome-title">Terminator is on a mission: find your next obsession.</h1>
+        <p>Let's find the movie you won't stop thinking about .</p>
       </section>
       <div class="thread hide" id="thread" aria-live="polite" aria-relevant="additions text"></div>
     </div>
     <div class="dock">
       <form class="composer" id="composer">
-        <textarea id="input" rows="2" placeholder="Let me Peek inside your mind..." aria-label="Message" autocomplete="off"></textarea>
+        <textarea id="input" rows="2" placeholder="Your next obsession starts here..." aria-label="Message" autocomplete="off"></textarea>
         <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
         <div class="attachments hide" id="attachments" aria-live="polite"></div>
         <div class="tools">
@@ -58,10 +58,10 @@
         </div>
       </form>
       <div class="chips" id="chips" aria-label="Suggested prompts">
-        <button class="chip" type="button" data-prompt="Make a pop song"><span>Make a pop song</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
-        <button class="chip" type="button" data-prompt="Fix my code"><span>Fix my code</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
-        <button class="chip" type="button" data-prompt="Help me create a profile"><span>Create a profile</span><svg class="i" aria-hidden="true"><use href="#icon-image"/></svg></button>
-        <button class="chip" type="button" data-prompt="Write a video script"><span>Write a video script</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        <button class="chip" type="button" data-prompt="Find me latest trendy Funny and witty movies"><span>Funny and witty</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        <button class="chip" type="button" data-prompt="Find me latest trendy Dark and futuristic movies"><span>Dark and futuristic</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
+        <button class="chip" type="button" data-prompt="Give a list of top 10 A mind-bending thriller movies"><span>A mind-bending thriller</span><svg class="i" aria-hidden="true"><use href="#icon-image"/></svg></button>
+        <button class="chip" type="button" data-prompt="Find me latest trendy Elegant and cinematic movies"><span>Elegant and cinematic</span><svg class="i" aria-hidden="true"><use href="#icon-play"/></svg></button>
       </div>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
@@ -83,6 +83,15 @@
     <input class="find hide" id="find" type="search" placeholder="Search" aria-label="Search conversations" aria-controls="recent">
     <div class="recent" id="recent" role="list" aria-labelledby="recent-heading"></div>
     <div class="profile" id="profile" aria-live="polite">
+      <button class="mood-toggle" id="mood-toggle" type="button" role="switch" aria-checked="false" aria-label="Change Mood">
+        <span>Change Mood</span>
+        <span class="mood-switch-track" aria-hidden="true">
+          <span class="mood-switch-thumb">
+            <svg class="mood-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+            <svg class="mood-moon" viewBox="0 0 24 24"><path d="M20.4 15.1A8.5 8.5 0 0 1 8.9 3.6 8.5 8.5 0 1 0 20.4 15.1Z"/></svg>
+          </span>
+        </span>
+      </button>
       <div id="profile-user" class="hide">
         <strong id="profile-name"></strong>
         <div class="profile-meta">

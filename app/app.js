@@ -8,6 +8,31 @@ const status = $("status");
 const side = $("side");
 const signInModal = $("signin-modal");
 const signInDismissKey = "signin_prompt_dismissed";
+const moodToggle = $("mood-toggle");
+const themeStorageKey = "terminator_theme";
+
+function prefersDarkTheme() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function currentThemeIsDark() {
+  const explicitTheme = document.documentElement.dataset.theme;
+  return explicitTheme ? explicitTheme === "dark" : prefersDarkTheme();
+}
+
+function syncMoodToggle() {
+  moodToggle.setAttribute("aria-checked", String(currentThemeIsDark()));
+}
+
+try {
+  const savedTheme = localStorage.getItem(themeStorageKey);
+  if (savedTheme === "dark" || savedTheme === "light") {
+    document.documentElement.dataset.theme = savedTheme;
+  }
+} catch {
+  // The control still works for this page load if storage is unavailable.
+}
+syncMoodToggle();
 
 let activeSessionId = null;
 let sessions = [];
@@ -465,6 +490,16 @@ $("mic").onclick = () => {
 
 $("collapse").onclick = () => side.classList.add("closed");
 $("menu").onclick = () => side.classList.toggle("closed");
+moodToggle.addEventListener("click", () => {
+  const theme = currentThemeIsDark() ? "light" : "dark";
+  document.documentElement.dataset.theme = theme;
+  moodToggle.setAttribute("aria-checked", String(theme === "dark"));
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // The selected theme remains applied until this page is closed.
+  }
+});
 if (window.matchMedia("(max-width: 760px)").matches) side.classList.add("closed");
 $("search-btn").onclick = () => {
   const find = $("find");
