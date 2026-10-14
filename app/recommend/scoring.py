@@ -5,10 +5,15 @@ MIN_AUDIENCE_SCORE = 7.0
 MIN_RT_SCORE = 70
 
 
-def passes_quality_bar(candidate: Candidate) -> bool:
-    if candidate.vote_count < MIN_VOTE_COUNT:
+def passes_quality_bar(
+    candidate: Candidate,
+    *,
+    min_vote_count: int = MIN_VOTE_COUNT,
+    min_vote_average: float = MIN_AUDIENCE_SCORE,
+) -> bool:
+    if candidate.vote_count < min_vote_count:
         return False
-    if candidate.vote_average < MIN_AUDIENCE_SCORE:
+    if candidate.vote_average < min_vote_average:
         return False
     return candidate.rt_score is None or candidate.rt_score >= MIN_RT_SCORE
 
@@ -46,6 +51,9 @@ def filter_and_rank(
     pool: list[Candidate],
     source: Candidate | None = None,
     limit: int = 5,
+    *,
+    min_vote_count: int = MIN_VOTE_COUNT,
+    min_vote_average: float = MIN_AUDIENCE_SCORE,
 ) -> list[ScoredCandidate]:
     if limit < 1:
         raise ValueError("limit must be at least 1.")
@@ -61,12 +69,16 @@ def filter_and_rank(
 
     scored: list[ScoredCandidate] = []
     for candidate in unique.values():
-        if not passes_quality_bar(candidate):
+        if not passes_quality_bar(
+            candidate,
+            min_vote_count=min_vote_count,
+            min_vote_average=min_vote_average,
+        ):
             continue
         if source is not None:
             score, reasons = overlap_score(candidate, source)
         else:
-            score = candidate.vote_average - MIN_AUDIENCE_SCORE
+            score = candidate.vote_average - min_vote_average
             reasons = []
         if candidate.imdb_rating is not None:
             score += max(0.0, candidate.imdb_rating - 7.0) * 0.25

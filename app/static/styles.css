@@ -89,7 +89,8 @@ svg.i {
   flex-direction: column;
   background: radial-gradient(120% 55% at 50% 100%, var(--tint) 0%, transparent 70%), linear-gradient(var(--glow) 40%, var(--frame));
 }
-.stage { display: flex; flex: 1; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+.stage { display: flex; flex: 1; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
+.stage::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .welcome { margin: auto; padding: 24px 16px 8px; text-align: center; }
 .welcome-logo { display: block; width: 182px; height: 182px; margin: 0 auto 20px; object-fit: contain; }
 .welcome h1 { margin: 0; color: var(--title); font-size: 24px; font-weight: 700; }

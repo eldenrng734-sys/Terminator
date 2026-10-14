@@ -24,7 +24,12 @@ async def recommend_from_query(
     watch_region = request_filters.get("watch_region")
     watch_memo: WatchMemo = {}
 
-    async def search(current: dict[str, Any]) -> list[ScoredCandidate]:
+    async def search(
+        current: dict[str, Any],
+        *,
+        min_vote_count: int,
+        min_vote_average: float,
+    ) -> list[ScoredCandidate]:
         params = build_discover_params(media_type, **current)
         raw_results = await discover(client, media_type, **params)
         pool: list[Candidate] = list(
@@ -38,22 +43,48 @@ async def recommend_from_query(
                 )
             )
         )
-        return await rank_with_optional_omdb(pool, source=None, limit=limit)
+        return await rank_with_optional_omdb(
+            pool,
+            source=None,
+            limit=limit,
+            min_vote_count=min_vote_count,
+            min_vote_average=min_vote_average,
+        )
 
-    results = await search(request_filters)
+    async def run_stage(current: dict[str, Any]) -> list[ScoredCandidate]:
+        return await search(
+            current,
+            min_vote_count=int(current.get("min_vote_count", MIN_VOTE_COUNT)),
+            min_vote_average=float(current.get("min_vote_average", MIN_AUDIENCE_SCORE)),
+        )
+
+    results = await run_stage(request_filters)
     if results:
         return results
 
-    keyword_filters = dict(request_filters)
-    had_keywords = bool(keyword_filters.pop("keyword_ids_any", None))
+    had_keywords = bool(request_filters.get("keyword_ids_any"))
+    had_language = bool(request_filters.get("language"))
+
+    no_keyword_filters = dict(request_filters)
+    no_keyword_filters.pop("keyword_ids_any", None)
     if had_keywords:
-        results = await search(keyword_filters)
+        results = await run_stage(no_keyword_filters)
         if results:
             return results
 
-    relaxed_filters = dict(keyword_filters if had_keywords else request_filters)
-    current_vote_floor = int(relaxed_filters.get("min_vote_count", MIN_VOTE_COUNT))
+    base = no_keyword_filters if had_keywords else request_filters
+    current_vote_floor = int(base.get("min_vote_count", MIN_VOTE_COUNT))
+    lowered_filters = dict(base)
     if current_vote_floor > 50:
-        relaxed_filters["min_vote_count"] = 50
-        return await search(relaxed_filters)
+        lowered_filters["min_vote_count"] = 50
+        results = await run_stage(lowered_filters)
+        if results:
+            return results
+    else:
+        lowered_filters = dict(base)
+
+    if had_language:
+        no_language_filters = dict(lowered_filters)
+        no_language_filters.pop("language", None)
+        return await run_stage(no_language_filters)
     return []

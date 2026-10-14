@@ -238,11 +238,28 @@ async def rank_with_optional_omdb(
     pool: list[Candidate],
     source: Candidate | None,
     limit: int,
+    *,
+    min_vote_count: int | None = None,
+    min_vote_average: float | None = None,
 ) -> list[ScoredCandidate]:
-    from app.recommend.scoring import filter_and_rank
+    from app.recommend.scoring import (
+        MIN_AUDIENCE_SCORE,
+        MIN_VOTE_COUNT,
+        filter_and_rank,
+    )
 
+    effective_vote_count = (
+        MIN_VOTE_COUNT if min_vote_count is None else min_vote_count
+    )
+    effective_vote_average = (
+        MIN_AUDIENCE_SCORE if min_vote_average is None else min_vote_average
+    )
     shortlist_ranked = filter_and_rank(
-        pool, source=source, limit=min(max(limit * 2, limit), 10)
+        pool,
+        source=source,
+        limit=min(max(limit * 2, limit), 10),
+        min_vote_count=effective_vote_count,
+        min_vote_average=effective_vote_average,
     )
     shortlist = [
         Candidate.model_validate(
@@ -255,4 +272,10 @@ async def rank_with_optional_omdb(
             await asyncio.gather(*(enrich_with_omdb(item) for item in shortlist))
         )
 
-    return filter_and_rank(shortlist, source=source, limit=limit)
+    return filter_and_rank(
+        shortlist,
+        source=source,
+        limit=limit,
+        min_vote_count=effective_vote_count,
+        min_vote_average=effective_vote_average,
+    )
