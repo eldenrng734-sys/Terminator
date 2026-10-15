@@ -1,4 +1,5 @@
 import re
+import uuid
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -99,6 +100,21 @@ async def callback(provider: str, request: Request):
     )
     request.session["user_id"] = user["id"]
     return RedirectResponse(url="/")
+
+
+@app.post("/api/auth/guest/login")
+async def guest_login(request: Request):
+    existing_id = request.session.get("user_id")
+    if isinstance(existing_id, int) and existing_id >= 1:
+        existing = auth_store.get_user_by_id(existing_id)
+        if existing is not None:
+            return existing
+    guest_id = f"guest-{uuid.uuid4().hex}"
+    user = auth_store.get_or_create_user(
+        "guest", guest_id, None, "Guest", None
+    )
+    request.session["user_id"] = user["id"]
+    return user
 
 
 @app.get("/api/auth/logout")

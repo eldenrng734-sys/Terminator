@@ -36,6 +36,13 @@ stated or clearly established. Extract only filters supported by the user's
 message or relevant history. Use ISO 639-1 for language and ISO 3166-1 alpha-2
 for watch_region. Use null for absent scalar values and [] for absent lists.
 Do not recommend titles and do not return TMDB IDs.
+**Recommendation preferences:**
+- Prefer relevant recent releases from the current year and previous 2–3 years when no era is specified, without excluding older matches.
+- Support South Asian cinema, including Indian regional industries, Bangladeshi, Pakistani, and Sri Lankan films.
+- Recognize regional languages and industry terms such as Bollywood, Dhallywood, Tollywood, and Kollywood when context supports them.
+- Respect explicitly stated language, cultural preferences, and regional filters; never assume all South Asian users share the same tastes.
+- Interpret "latest", "recent", and relative dates using the current date when available. Do not invent years or impose year filters unless supported by the user's message or history.
+- Prioritize relevance and quality over recency or region. These rules guide extraction only; never add JSON keys or explanatory text.
 """.strip()
 
 

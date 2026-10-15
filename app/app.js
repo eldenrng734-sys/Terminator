@@ -528,6 +528,35 @@ signInModal.addEventListener("cancel", (event) => {
   dismissSignInPrompt();
 });
 
+async function applyAuthenticatedUser(user) {
+  isAuthenticated = true;
+  if (signInModal.open) signInModal.close();
+  $("profile-login").classList.add("hide");
+  $("profile-user").classList.remove("hide");
+  $("profile-name").textContent = user.name || user.email || "Guest";
+  $("profile-email").textContent = user.email || (user.provider === "guest" ? "Guest session" : "");
+  await refreshSessions();
+  const savedId = localStorage.getItem("active_session_id");
+  const saved = sessions.find((session) => session.id === savedId);
+  if (saved) await openSession(saved.id);
+  else if (sessions.length) await openSession(sessions[0].id);
+  else await createSession();
+}
+
+async function continueAsGuest(event) {
+  const button = event?.currentTarget;
+  if (button) button.disabled = true;
+  setStatus("Starting guest session...");
+  try {
+    const user = await readJson(await apiFetch("/api/auth/guest/login", { method: "POST" }));
+    setStatus("");
+    await applyAuthenticatedUser(user);
+  } catch (error) {
+    reportError(error);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 async function initialize() {
   let user;
   try {
@@ -540,17 +569,10 @@ async function initialize() {
     throw error;
   }
 
-  isAuthenticated = true;
-  $("profile-login").classList.add("hide");
-  $("profile-user").classList.remove("hide");
-  $("profile-name").textContent = user.name || user.email || "";
-  $("profile-email").textContent = user.email || "";
-  await refreshSessions();
-  const savedId = localStorage.getItem("active_session_id");
-  const saved = sessions.find((session) => session.id === savedId);
-  if (saved) await openSession(saved.id);
-  else if (sessions.length) await openSession(sessions[0].id);
-  else await createSession();
+  await applyAuthenticatedUser(user);
 }
+
+$("guest-login-modal")?.addEventListener("click", (event) => void continueAsGuest(event));
+$("guest-login-side")?.addEventListener("click", (event) => void continueAsGuest(event));
 
 void initialize().catch(reportError);

@@ -202,6 +202,7 @@ svg.i {
 .profile-login > strong { margin-bottom: 2px; }
 .profile-login-link { color: var(--teal); font-size: 12px; text-decoration: none; }
 .profile-login-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.profile-guest-link { padding: 0; text-align: left; font: inherit; }
 .menu { position: absolute; z-index: 3; top: 14px; right: 14px; display: none; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel); color: var(--muted); }
 
 .signin-modal { width: min(420px, calc(100% - 32px)); max-width: none; padding: 0; overflow: visible; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); color: var(--ink); box-shadow: 0 20px 70px rgb(0 0 0 / 35%); }
@@ -209,10 +210,12 @@ svg.i {
 .signin-modal-content { position: relative; padding: 32px; }
 .signin-modal h2 { margin: 0 28px 22px 0; color: var(--title); font-size: 21px; line-height: 1.35; }
 .signin-options { display: grid; gap: 10px; }
-.signin-provider { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 9px 14px; border: 1px solid var(--line2); border-radius: 7px; color: var(--ink); text-decoration: none; }
+.signin-provider { display: flex; min-height: 44px; align-items: center; justify-content: center; width: 100%; padding: 9px 14px; border: 1px solid var(--line2); border-radius: 7px; background: none; color: var(--ink); font: inherit; text-decoration: none; }
 .signin-provider:hover { border-color: var(--teal2); background: var(--frame); }
 .signin-provider.github { border-color: var(--ink); background: var(--ink); color: var(--panel); }
 .signin-provider.github:hover { opacity: .88; }
+.signin-provider.guest { border-style: dashed; }
+.signin-provider:disabled { cursor: wait; opacity: .6; }
 .signin-close { position: absolute; top: 10px; right: 12px; display: grid; width: 32px; height: 32px; place-items: center; border-radius: 50%; color: var(--muted); font-size: 22px; line-height: 1; }
 .signin-close:hover, .signin-later:hover { background: var(--frame); color: var(--ink); }
 .signin-later { display: block; margin: 14px auto 0; padding: 6px 10px; border-radius: 6px; color: var(--muted); font-size: 13px; }
